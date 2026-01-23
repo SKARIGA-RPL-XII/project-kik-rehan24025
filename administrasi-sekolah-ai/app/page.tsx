@@ -6,7 +6,7 @@ export default function Home() {
       bg-gradient-to-br from-blue-100 via-white to-blue-200 px-6">
 
       <h1 className="text-4xl md:text-5xl font-bold text-blue-800 text-center">
-        Website Administrasi Sekolah
+        Aplikasi Administrasi Sekolah
       </h1>
 
       <p className="mt-4 text-center text-gray-700 max-w-xl">
