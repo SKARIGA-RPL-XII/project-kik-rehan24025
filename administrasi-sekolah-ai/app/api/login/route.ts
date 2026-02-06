@@ -28,19 +28,23 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       message: "Login berhasil",
-      user: {
-        id: user.id,
-        name: user.name,
-        role_id: user.role_id,
-      },
     });
 
-  } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    // COOKIE LOGIN
+    res.cookies.set("user_id", String(user.id), {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+    });
+
+    return res;
+
+  } catch (err) {
+    console.error(err);
     return NextResponse.json(
-      { message: "Terjadi kesalahan server" },
+      { message: "Server error" },
       { status: 500 }
     );
   }
