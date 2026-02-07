@@ -16,8 +16,8 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-6"
-      >
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+      
+       ><h1 className="text-3xl font-bold flex items-center gap-2">
           <LayoutDashboard /> Dashboard Admin
         </h1>
         <p className="text-slate-500">Panel pengelolaan sistem</p>

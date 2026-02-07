@@ -63,13 +63,32 @@ export default function DashboardSuratPage() {
           )}
         </div>
 
-        <nav className="flex-1 px-4 mt-4 space-y-2">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active isOpen={isSidebarOpen} />
-          <Link href="/ajukan">
-            <NavItem icon={<Send size={20} />} label="Ajukan Surat" isOpen={isSidebarOpen} />
-          </Link>
-          <NavItem icon={<History size={20} />} label="Riwayat" isOpen={isSidebarOpen} />
-        </nav>
+       <nav className="flex-1 px-4 mt-4 space-y-2">
+  <NavItem
+    icon={<LayoutDashboard size={20} />}
+    label="Dashboard"
+    active
+    isOpen={isSidebarOpen}
+  />
+
+  <Link href="/ajukan">
+    <NavItem
+      icon={<Send size={20} />}
+      label="Ajukan Surat"
+      isOpen={isSidebarOpen}
+    />
+  </Link>
+
+  {/* RIWAYAT */}
+  <Link href="/riwayat">
+    <NavItem
+      icon={<History size={20} />}
+      label="Riwayat"
+      isOpen={isSidebarOpen}
+    />
+  </Link>
+</nav>
+
       </aside>
 
       {/* MAIN CONTENT */}
