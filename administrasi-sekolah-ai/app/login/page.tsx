@@ -2,9 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Cpu, Lock, Mail, ArrowLeft, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
+  
+  // --- LOGIKA ASLI (TIDAK DIUBAH) ---
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -23,11 +28,8 @@ export default function LoginPage() {
 
       if (res.ok) {
         alert("Login berhasil");
-
-        console.log("ROLE:", data.role);
-
         if (data.role?.toLowerCase() === "admin") {
-          router.push("/admin"); // SESUAIKAN DENGAN FOLDER
+          router.push("/admin"); 
         } else {
           router.push("/dashboard");
         }
@@ -40,107 +42,126 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-  
+  // --- END LOGIKA ASLI ---
 
   return (
-    <div className="min-h-screen flex font-sans overflow-hidden">
-      {/* BAGIAN KIRI - WELCOME SECTION */}
-      <div className="hidden lg:flex flex-col justify-center items-start w-2/5 bg-white p-20 relative animate-fadeInLeft">
-        <div className="absolute top-12 left-12 flex items-center space-x-2">
-          <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-white rounded-full"></div>
-          </div>
-          <div className="text-xs font-bold leading-tight">
-            <span className="text-blue-600">adminitrasi sekolah </span><br />
-            <span className="text-blue-400 text-[10px]">(a)</span>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F7FF] relative overflow-hidden font-sans">
+      
+      {/* Dekorasi Background */}
+      <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-80 h-80 bg-orange-100 rounded-full blur-3xl opacity-40"></div>
 
-        <h1 className="text-3xl font-bold text-blue-500 mb-2">WELCOME BACK !</h1>
-        <p className="text-blue-400 text-lg max-w-xs">
-          Enter your ID and Password to continue
-        </p>
-      </div>
-
-      {/* BAGIAN KANAN - FORM SECTION */}
-      <div className="relative flex-1 bg-gradient-to-b from-blue-700 to-blue-400 flex flex-col justify-center items-center p-8 overflow-hidden">
-        
-        <div className="absolute left-0 h-[120%] w-32 bg-white -translate-x-1/2 rounded-[100%] hidden lg:block"></div>
-
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-20 left-20 text-white text-4xl italic">🗝️</div>
-          <div className="absolute bottom-20 right-20 text-white text-4xl italic">✉️</div>
-          <div className="absolute middle right-1/3 text-white text-4xl italic">🔒</div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="relative z-10 w-full max-w-sm animate-fadeInUp"
-        >
-          <div className="text-center mb-10">
-            <h2 className="text-white text-3xl font-semibold tracking-wide">SIGN IN</h2>
-            <p className="text-blue-100 text-sm tracking-widest mt-1">TO ACCESS THE PORTAL</p>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex w-full max-w-4xl min-h-[550px] bg-white rounded-[30px] shadow-2xl overflow-hidden z-10 mx-4"
+      >
+        {/* SISI KIRI: Welcome Section (Biru ke Oranye Gradient) */}
+        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-orange-500 p-12 text-white flex-col justify-between relative">
+          <div className="relative z-10">
+            <Link href="/" className="flex items-center gap-2 mb-12 hover:opacity-80 transition-all">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
+                <Cpu className="text-white w-6 h-6" />
+              </div>
+              <span className="font-bold text-xl tracking-tight text-white">EduAdminAI</span>
+            </Link>
+            
+            <h1 className="text-4xl font-extrabold leading-tight mb-4">
+              Selamat Datang <br /> Kembali!
+            </h1>
+            <p className="text-blue-100 leading-relaxed text-lg">
+              Masukkan kredensial Anda untuk melanjutkan akses ke sistem administrasi cerdas.
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="relative group">
-              <span className="absolute inset-y-0 left-4 flex items-center text-blue-500">
-                👤
-              </span>
-              <input
-                placeholder="Enter User Name Here"
-                type="email"
-                required
-                className="w-full pl-12 pr-4 py-4 rounded-full border-none outline-none text-gray-700 bg-white shadow-inner focus:ring-4 focus:ring-blue-300 transition-all duration-300"
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
+          <div className="relative z-10 flex items-center gap-4 bg-black/10 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+            <div className="p-3 bg-blue-400 rounded-xl">
+              <ShieldCheck className="text-white" />
             </div>
-
-            <div className="relative group">
-              <span className="absolute inset-y-0 left-4 flex items-center text-blue-500">
-                🔑
-              </span>
-              <input
-                placeholder="Enter Password"
-                type="password"
-                required
-                className="w-full pl-12 pr-4 py-4 rounded-full border-none outline-none text-gray-700 bg-white shadow-inner focus:ring-4 focus:ring-blue-300 transition-all duration-300"
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
+            <div>
+              <p className="text-xs text-blue-100 uppercase font-bold tracking-wider">Keamanan</p>
+              <p className="text-sm italic">Sesi Anda terenkripsi aman</p>
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="w-full mt-6 bg-[#00d27a] hover:bg-[#00bc6d] text-white font-bold py-4 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 active:scale-95 transition-all duration-300"
-          >
-            Login
-          </button>
+          {/* Pola Dekorasi SVG */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+             <svg width="100%" height="100%"><pattern id="pattern-circles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="#fff" /></pattern><rect width="100%" height="100%" fill="url(#pattern-circles)" /></svg>
+          </div>
+        </div>
 
-          <div className="text-center mt-6">
-            <button type="button" className="text-blue-100 hover:text-white text-sm underline transition-colors">
-              Forgot Password?
+        {/* SISI KANAN: Form Login */}
+        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
+          <div className="mb-10 text-center md:text-left">
+            <h2 className="text-3xl font-black text-blue-900 mb-2 uppercase tracking-tight">Sign In</h2>
+            <p className="text-gray-500 text-sm tracking-widest uppercase">To Access The Portal</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-blue-900 uppercase ml-1">Email / Username</label>
+              <div className="relative group">
+                <span className="absolute inset-y-0 left-4 flex items-center text-blue-400 group-focus-within:text-blue-600 transition-colors">
+                  <Mail size={18} />
+                </span>
+                <input
+                  type="email"
+                  required
+                  placeholder="Enter User Name Here"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 text-gray-700"
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-blue-900 uppercase ml-1">Password</label>
+              <div className="relative group">
+                <span className="absolute inset-y-0 left-4 flex items-center text-blue-400 group-focus-within:text-blue-600 transition-colors">
+                  <Lock size={18} />
+                </span>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter Password"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 text-gray-700"
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button type="button" className="text-xs font-bold text-blue-500 hover:text-orange-500 transition-colors">
+                Forgot Password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full ${loading ? 'bg-gray-400' : 'bg-[#00d27a] hover:bg-[#00bc6d]'} text-white font-black py-4 rounded-2xl shadow-lg shadow-green-100 hover:shadow-green-200 transform hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-widest`}
+            >
+              {loading ? "Processing..." : "Login"}
             </button>
+          </form>
+
+          {/* Navigasi Bawah */}
+          <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col gap-4">
+            <Link href="/register" className="text-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+              Belum punya akun? <span className="font-bold text-orange-500 hover:underline">Daftar Sekarang</span>
+            </Link>
+            
+            <Link href="/" className="flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-blue-600 transition-colors font-medium">
+              <ArrowLeft size={16} /> Back to Home
+            </Link>
           </div>
-        </form>
-
-        <div className="absolute bottom-6 text-white text-[10px] opacity-70">
-          Copyright © 2026 Commllink Info Tech Ltd. All rights reserved.
         </div>
-      </div>
+      </motion.div>
 
-      <style jsx global>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInLeft {
-          from { opacity: 0; transform: translateX(-20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; }
-        .animate-fadeInLeft { animation: fadeInLeft 0.8s ease-out forwards; }
-      `}</style>
+      <div className="absolute bottom-6 text-gray-400 text-[10px] tracking-widest uppercase">
+        Copyright © 2026 EduAdminAI Tech Ltd. All rights reserved.
+      </div>
     </div>
   );
 }

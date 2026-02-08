@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard, 
   Send, 
@@ -11,27 +12,22 @@ import {
   X, 
   GraduationCap, 
   Bell, 
-  MessageSquare 
+  MessageSquare,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+  Info,
+  ArrowLeft,
+  PenLine
 } from "lucide-react";
-
-// Komponen NavItem untuk Sidebar
-const NavItem = ({ icon, label, active = false, isOpen }: any) => (
-  <div className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-    active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'
-  }`}>
-    {icon}
-    {isOpen && <span className="font-medium">{label}</span>}
-  </div>
-);
 
 export default function AjukanSuratPage() {
   const router = useRouter();
-  
-  // State untuk Layout
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   
-  // Mock data User (Sesuaikan dengan auth kamu nantinya)
-  const user = { name: "Budi Santoso", role: "Guru" };
+  // Mock data User
+  const user = { name: "Budi Santoso", role: "Guru Pengajar" };
 
   // State untuk Form
   const [form, setForm] = useState({
@@ -43,6 +39,19 @@ export default function AjukanSuratPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Simulasi Fitur AI (Hanya UI)
+  const handleAiWrite = () => {
+    if (!form.jenis || !form.judul) return alert("Pilih jenis dan judul surat terlebih dahulu agar AI bisa bekerja.");
+    setIsAiLoading(true);
+    setTimeout(() => {
+      setForm({
+        ...form,
+        isi: `Yth. ${form.penerima || "[Nama Penerima]"},\n\nMelalui surat ini, saya yang bertanda tangan di bawah ini mengajukan ${form.jenis} terkait ${form.judul}. Adapun alasan pengajuan ini adalah untuk keperluan kedinasan/pribadi yang tidak dapat ditinggalkan.\n\nDemikian surat ini saya sampaikan, atas perhatian dan izin yang diberikan saya ucapkan terima kasih.`
+      });
+      setIsAiLoading(false);
+    }, 1500);
   };
 
   const submit = async () => {
@@ -63,134 +72,201 @@ export default function AjukanSuratPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* SIDEBAR */}
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col z-50 fixed h-full`}>
-        <div className="p-6 flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-200">
+    <div className="flex min-h-screen bg-[#F4F7FE] text-slate-800 font-sans overflow-hidden">
+      
+      {/* SIDEBAR (Konsisten dengan Dashboard) */}
+      <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} transition-all duration-500 bg-white border-r border-slate-100 flex flex-col z-50`}>
+        <div className="p-8 flex items-center gap-4 overflow-hidden whitespace-nowrap">
+          <div className="bg-blue-600 w-10 h-10 min-w-[40px] rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
             <GraduationCap className="text-white w-6 h-6" />
           </div>
-          {isSidebarOpen && (
-            <div>
-              <h1 className="font-bold text-xl tracking-tight text-slate-800">SAS Digital</h1>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">User Portal</p>
-            </div>
-          )}
+          <div className={`transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+            <h1 className="font-black text-xl tracking-tight text-slate-800">SAS<span className="text-blue-600">PRO</span></h1>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">User Portal</p>
+          </div>
         </div>
 
-        <nav className="flex-1 px-4 mt-4 space-y-2">
+        <nav className="flex-1 px-4 mt-6 space-y-2">
           <Link href="/dashboard">
-            <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" isOpen={isSidebarOpen} />
+            <NavItem icon={<LayoutDashboard size={22} />} label="Dashboard" isOpen={isSidebarOpen} />
           </Link>
-          <Link href="/ajukan">
-            <NavItem icon={<Send size={20} />} label="Ajukan Surat" active isOpen={isSidebarOpen} />
+          <NavItem icon={<Send size={22} />} label="Ajukan Surat" active isOpen={isSidebarOpen} />
+          <Link href="/riwayat">
+            <NavItem icon={<History size={22} />} label="Riwayat Surat" isOpen={isSidebarOpen} />
           </Link>
-          <NavItem icon={<History size={20} />} label="Riwayat" isOpen={isSidebarOpen} />
         </nav>
+
+        {isSidebarOpen && (
+          <div className="m-6 p-5 bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl text-white relative overflow-hidden group shadow-lg shadow-orange-100">
+            <Sparkles className="absolute -right-2 -top-2 opacity-20 group-hover:rotate-12 transition-transform" size={60} />
+            <p className="text-xs font-bold opacity-80 mb-1 tracking-wider uppercase">Pro Account</p>
+            <p className="text-sm font-black mb-4 leading-tight">Gunakan AI untuk menulis surat otomatis!</p>
+            <button className="bg-white text-orange-600 text-[10px] font-black py-2 px-4 rounded-xl uppercase tracking-widest hover:bg-orange-50 transition-colors shadow-sm">
+              Upgrade
+            </button>
+          </div>
+        )}
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* HEADER */}
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
-              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-10 flex justify-between items-center z-40">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 transition-all border border-transparent hover:border-slate-100">
+              <Menu size={20} />
             </button>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">Pengajuan Surat</h1>
-              <p className="text-sm text-gray-400">Silahkan isi formulir di bawah ini</p>
+            <div className="hidden lg:block">
+              <h1 className="text-xl font-black text-slate-800">Formulir Pengajuan</h1>
+              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                <PenLine size={12} className="text-blue-500" /> Surat Kedinasan Digital
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex gap-4 border-r pr-6">
-              <div className="relative cursor-pointer hover:scale-110 transition-transform text-slate-400">
-                <MessageSquare className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 bg-orange-500 w-2 h-2 rounded-full border-2 border-white"></span>
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4 pl-8 border-l border-slate-100">
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-black text-slate-800 leading-none mb-1">{user.name}</p>
+                <div className="flex items-center justify-end gap-1">
+                  <ShieldCheck size={10} className="text-blue-500" />
+                  <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">{user.role}</p>
+                </div>
               </div>
-              <div className="relative cursor-pointer hover:scale-110 transition-transform text-slate-400">
-                <Bell className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full border-2 border-white"></span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-sm font-bold text-slate-800 leading-none">{user.name}</p>
-                <p className="text-[11px] text-gray-400 font-medium">{user.role}</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-600 rounded-full ring-4 ring-blue-50 flex items-center justify-center text-white font-bold">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center text-white font-black text-xl border-2 border-white ring-1 ring-slate-100">
                 {user.name.charAt(0)}
               </div>
             </div>
           </div>
         </header>
 
-        {/* FORM CONTENT */}
-        <main className="p-8">
-          <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <h2 className="text-lg font-semibold text-slate-800 mb-6 flex items-center gap-2">
-              <Send className="w-5 h-5 text-blue-600" />
-              Detail Surat
-            </h2>
+        {/* SCROLLABLE FORM AREA */}
+        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-[#F4F7FE]">
+          <div className="max-w-4xl mx-auto space-y-8">
+            
+            <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 font-bold text-sm transition-colors group">
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Kembali ke Dashboard
+            </Link>
 
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Surat</label>
-                <select
-                  name="jenis"
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                >
-                  <option value="">Pilih jenis surat</option>
-                  <option value="izin">Izin</option>
-                  <option value="cuti">Cuti</option>
-                </select>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-[40px] shadow-sm border border-slate-50 overflow-hidden"
+            >
+              <div className="grid md:grid-cols-3">
+                {/* Information Side (Left) */}
+                <div className="bg-slate-900 p-10 text-white">
+                  <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-500/20">
+                    <Info size={24} />
+                  </div>
+                  <h3 className="text-2xl font-black mb-4 leading-tight">Panduan Pengajuan</h3>
+                  <ul className="space-y-4 text-slate-400 text-sm font-medium">
+                    <li className="flex gap-3"><span className="text-blue-500 font-black">01</span> Pastikan jenis surat sesuai dengan kebutuhan Anda.</li>
+                    <li className="flex gap-3"><span className="text-blue-500 font-black">02</span> Gunakan bahasa formal dan sopan dalam isi surat.</li>
+                    <li className="flex gap-3"><span className="text-blue-500 font-black">03</span> Persetujuan akan dilakukan oleh Admin dalam 1x24 jam.</li>
+                  </ul>
+
+                  <div className="mt-12 p-6 bg-white/5 rounded-3xl border border-white/10">
+                    <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Butuh Bantuan?</p>
+                    <p className="text-xs text-slate-400">Hubungi tim IT SAS Digital jika mengalami kendala teknis.</p>
+                  </div>
+                </div>
+
+                {/* Form Side (Right) */}
+                <div className="md:col-span-2 p-10">
+                  <div className="space-y-6">
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori Surat</label>
+                        <select
+                          name="jenis"
+                          onChange={handleChange}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="">Pilih Kategori</option>
+                          <option value="Izin Meninggalkan Tugas">Izin Meninggalkan Tugas</option>
+                          <option value="Permohonan Cuti">Permohonan Cuti</option>
+                          <option value="Surat Tugas">Surat Tugas</option>
+                          <option value="Undangan Rapat">Undangan Rapat</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul / Perihal</label>
+                        <input
+                          name="judul"
+                          placeholder="Contoh: Izin Sakit"
+                          onChange={handleChange}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Penerima (Yth.)</label>
+                      <input
+                        name="penerima"
+                        placeholder="Nama Kepala Sekolah atau Jabatan Terkait"
+                        onChange={handleChange}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-2 relative">
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Isi Surat Lengkap</label>
+                        <button 
+                          onClick={handleAiWrite}
+                          disabled={isAiLoading}
+                          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-tighter text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <Sparkles size={12} className={isAiLoading ? 'animate-spin' : ''} /> {isAiLoading ? 'Menulis...' : 'Bantu Tulis (AI)'}
+                        </button>
+                      </div>
+                      <textarea
+                        name="isi"
+                        value={form.isi}
+                        onChange={handleChange}
+                        placeholder="Tuliskan isi surat secara mendetail di sini..."
+                        className="w-full bg-slate-50 border border-slate-100 rounded-[24px] p-6 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none transition-all h-56 resize-none leading-relaxed"
+                      />
+                    </div>
+
+                    <button
+                      onClick={submit}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[24px] shadow-xl shadow-blue-100 flex justify-center items-center gap-3 transition-all active:scale-[0.98] mt-4"
+                    >
+                      Kirim Pengajuan Sekarang <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
               </div>
+            </motion.div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Judul Surat</label>
-                <input
-                  name="judul"
-                  placeholder="Contoh: Permohonan Izin Sakit"
-                  className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ditujukan Kepada</label>
-                <input
-                  name="penerima"
-                  placeholder="Nama Kepala Sekolah / HRD"
-                  className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Isi Surat</label>
-                <textarea
-                  name="isi"
-                  placeholder="Tuliskan alasan atau detail pengajuan Anda..."
-                  className="w-full border border-gray-200 rounded-xl p-3 h-40 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <button
-                onClick={submit}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-4 rounded-xl w-full shadow-lg shadow-blue-100 transition-all flex justify-center items-center gap-2 mt-4"
-              >
-                <Send size={18} />
-                Kirim Pengajuan
-              </button>
-            </div>
+            <footer className="text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] py-10">
+              © 2026 SAS Digital System • Integrated Admin Portal
+            </footer>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+      `}</style>
     </div>
   );
 }
+
+// NavItem Component (Konsisten dengan Dashboard)
+const NavItem = ({ icon, label, active = false, isOpen }: any) => (
+  <div className={`
+    flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all duration-300 relative group
+    ${active ? 'bg-blue-600 text-white shadow-xl shadow-blue-100' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'}
+  `}>
+    <div className={`${active ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>{icon}</div>
+    {isOpen && <span className="text-sm font-black tracking-wide leading-none">{label}</span>}
+  </div>
+);
