@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies(); // ✅ HARUS await
+    const cookieStore = await cookies();
     const userId = cookieStore.get("user_id")?.value;
 
     if (!userId) {
@@ -14,24 +14,35 @@ export async function GET() {
       );
     }
 
+    // Menggunakan JOIN untuk mengambil nama role dari tabel 'roles'
+    // Sesuai dengan skema: users.role_id = roles.id
     const [rows]: any = await db.query(
-      "SELECT id, name, role_id FROM users WHERE id = ?",
+      `SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.role_id, 
+        r.role_name 
+       FROM users u
+       JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = ?`,
       [userId]
     );
 
-    if (rows.length === 0) {
+    if (!rows || rows.length === 0) {
       return NextResponse.json(
-        { message: "User tidak ditemukan" },
+        { message: "User tidak ditemukan di database" },
         { status: 404 }
       );
     }
 
+    // Mengembalikan data user lengkap dengan role_name untuk Dashboard
     return NextResponse.json(rows[0]);
 
   } catch (error) {
-    console.error("ME ERROR:", error);
+    console.error("DATABASE_ME_ERROR:", error);
     return NextResponse.json(
-      { message: "Server error" },
+      { message: "Gagal mengambil data user dari database" },
       { status: 500 }
     );
   }
