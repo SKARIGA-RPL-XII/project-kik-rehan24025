@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Cpu, Lock, Mail, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 export default function LoginPage() {
   const router = useRouter();
   
-  // --- LOGIKA ASLI (TIDAK DIUBAH) ---
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
+  // --- LOGIKA DIPERBARUI (DENGAN ANIMASI ALERT) ---
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
@@ -27,22 +28,60 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Login berhasil");
-        if (data.role?.toLowerCase() === "admin") {
-          router.push("/admin"); 
-        } else {
-          router.push("/dashboard");
-        }
+        // Notifikasi Berhasil (Centang)
+        Swal.fire({
+          icon: "success",
+          title: "Login Berhasil",
+          text: "Mengarahkan Anda ke dashboard...",
+          showConfirmButton: false, // Tidak perlu diklik
+          timer: 1500, // Hilang dalam 1.5 detik
+          timerProgressBar: true,
+          background: "#fff",
+          iconColor: "#00d27a",
+          customClass: {
+            popup: "rounded-[25px]",
+            title: "font-black text-blue-900",
+          }
+        });
+
+        // Redirect otomatis setelah animasi selesai
+        setTimeout(() => {
+          if (data.role?.toLowerCase() === "admin") {
+            router.push("/admin"); 
+          } else {
+            router.push("/dashboard");
+          }
+        }, 1600);
+
       } else {
-        alert(data.message);
+        // Notifikasi Gagal
+        Swal.fire({
+          icon: "error",
+          title: "Login Gagal",
+          text: data.message || "Email atau password salah",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          background: "#fff",
+          iconColor: "#ef4444",
+          customClass: {
+            popup: "rounded-[25px]",
+            title: "font-black text-red-600",
+          }
+        });
       }
     } catch (err) {
-      alert("Terjadi kesalahan");
+      Swal.fire({
+        icon: "warning",
+        title: "Terjadi Kesalahan",
+        text: "Koneksi server bermasalah",
+        showConfirmButton: false,
+        timer: 2000,
+      });
     } finally {
       setLoading(false);
     }
   };
-  // --- END LOGIKA ASLI ---
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F0F7FF] relative overflow-hidden font-sans">
@@ -57,21 +96,21 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="flex w-full max-w-4xl min-h-[550px] bg-white rounded-[30px] shadow-2xl overflow-hidden z-10 mx-4"
       >
-        {/* SISI KIRI: Welcome Section (Biru ke Oranye Gradient) */}
+        {/* SISI KIRI: Welcome Section */}
         <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-orange-500 p-12 text-white flex-col justify-between relative">
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-2 mb-12 hover:opacity-80 transition-all">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
                 <Cpu className="text-white w-6 h-6" />
               </div>
-              <span className="font-bold text-xl tracking-tight text-white">EduAdminAI</span>
+              <span className="font-bold text-xl tracking-tight text-white">ASAI</span>
             </Link>
             
             <h1 className="text-4xl font-extrabold leading-tight mb-4">
               Selamat Datang <br /> Kembali!
             </h1>
             <p className="text-blue-100 leading-relaxed text-lg">
-              Masukkan kredensial Anda untuk melanjutkan akses ke sistem administrasi cerdas.
+              Masukkan kredensial Anda untuk melanjutkan akses ke sistem administrasiai sekolah cerdas.
             </p>
           </div>
 
@@ -85,7 +124,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Pola Dekorasi SVG */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
              <svg width="100%" height="100%"><pattern id="pattern-circles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="#fff" /></pattern><rect width="100%" height="100%" fill="url(#pattern-circles)" /></svg>
           </div>
@@ -140,9 +178,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full ${loading ? 'bg-gray-400' : 'bg-[#00d27a] hover:bg-[#00bc6d]'} text-white font-black py-4 rounded-2xl shadow-lg shadow-green-100 hover:shadow-green-200 transform hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-widest`}
+              className={`w-full ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#00d27a] hover:bg-[#00bc6d] active:scale-95'} text-white font-black py-4 rounded-2xl shadow-lg shadow-green-100 hover:shadow-green-200 transform hover:-translate-y-1 transition-all duration-300 uppercase tracking-widest`}
             >
-              {loading ? "Processing..." : "Login"}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                  Processing...
+                </div>
+              ) : "Login"}
             </button>
           </form>
 
@@ -162,6 +205,17 @@ export default function LoginPage() {
       <div className="absolute bottom-6 text-gray-400 text-[10px] tracking-widest uppercase">
         Copyright © 2026 EduAdminAI Tech Ltd. All rights reserved.
       </div>
+
+      {/* Style Tambahan untuk SweetAlert agar sesuai tema */}
+      <style jsx global>{`
+        .swal2-popup {
+          font-family: 'Inter', sans-serif !important;
+          padding: 2rem !important;
+        }
+        .swal2-timer-progress-bar {
+          background: #00d27a !important;
+        }
+      `}</style>
     </div>
   );
 }

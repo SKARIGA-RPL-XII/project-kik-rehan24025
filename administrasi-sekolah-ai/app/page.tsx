@@ -26,7 +26,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Cpu className="text-white w-5 h-5" />
             </div>
-            <span className="font-bold text-xl text-blue-900 tracking-tight">EduAdmin<span className="text-blue-500">AI</span></span>
+            <span className="font-bold text-xl text-blue-900 tracking-tight">AS<span className="text-blue-500">AI</span></span>
           </div>
           <div className="hidden md:flex items-center gap-8 font-medium text-gray-600">
             <a href="#fitur" className="hover:text-blue-600 transition-colors">Fitur</a>

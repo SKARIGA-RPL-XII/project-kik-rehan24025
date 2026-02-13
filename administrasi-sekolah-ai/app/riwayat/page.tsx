@@ -1,59 +1,87 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  CheckCircle, 
-  Send, 
-  XCircle, 
-  LayoutDashboard, 
-  History, 
-  Menu, 
-  X, 
-  GraduationCap, 
-  Bell, 
-  MessageSquare,
-  Sparkles,
-  ChevronRight,
-  ShieldCheck,
-  Search,
-  Filter,
-  ArrowUpRight,
-  Clock
+  CheckCircle, Send, XCircle, LayoutDashboard, History, Menu, X, 
+  GraduationCap, Bell, MessageSquare, Sparkles, ChevronRight, 
+  ShieldCheck, Search, Filter, ArrowUpRight, Clock, LogOut, 
+  User as UserIcon, Calendar, FileText, Info
 } from "lucide-react";
 
 export default function RiwayatPage() {
+  const router = useRouter();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
-  const user = { name: "Budi Santoso", role: "Guru Pengajar" };
+  // --- STATE UNTUK MODAL DETAIL ---
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // --- AMBIL DATA USER ---
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => setUser(data))
+      .catch((err) => console.error("Error fetching user:", err));
+  }, []);
+
+  // --- LOGIKA CLOSE DROPDOWN SAAT CLICK LUAR ---
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    router.push("/login");
+  };
 
   const data = [
     {
+      id: "SAS-001",
       title: "Surat Izin Kegiatan",
       desc: "Pengajuan izin untuk ekstrakurikuler basket di GOR kota.",
+      fullDesc: "Surat permohonan izin penggunaan lapangan GOR Kota untuk kegiatan seleksi tim basket sekolah yang akan dilaksanakan pada tanggal 20 Februari 2026. Seluruh berkas proposal telah dilampirkan.",
       time: "2 jam yang lalu",
+      date: "12 Feb 2026",
       icon: <CheckCircle className="text-green-500" />,
       status: "disetujui",
       color: "green"
     },
     {
+      id: "SAS-002",
       title: "Permohonan Cuti Sakit",
       desc: "Lampiran surat keterangan dokter terlampir dalam sistem.",
+      fullDesc: "Permohonan cuti sakit atas nama siswa yang bersangkutan untuk durasi 3 hari. Surat keterangan dari RSUD telah diunggah ke dalam sistem sebagai bukti otentik.",
       time: "1 hari yang lalu",
+      date: "11 Feb 2026",
       icon: <Clock className="text-orange-500" />,
       status: "menunggu",
       color: "orange"
     },
     {
+      id: "SAS-003",
       title: "Pengajuan Dana Kegiatan",
       desc: "Revisi anggaran diperlukan untuk bagian konsumsi.",
+      fullDesc: "Pengajuan anggaran untuk acara HUT Sekolah ke-25. Ditolak sementara karena rincian biaya konsumsi dianggap terlalu tinggi dan perlu dilakukan penyesuaian ulang oleh panitia.",
       time: "5 hari yang lalu",
+      date: "07 Feb 2026",
       icon: <XCircle className="text-red-500" />,
       status: "ditolak",
       color: "red"
     },
   ];
+
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen bg-[#F4F7FE] text-slate-800 font-sans overflow-hidden">
@@ -110,17 +138,46 @@ export default function RiwayatPage() {
           </div>
 
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-4 pl-8 border-l border-slate-100">
+            <div className="flex items-center gap-4 pl-8 border-l border-slate-100 relative" ref={dropdownRef}>
               <div className="text-right hidden md:block">
                 <p className="text-sm font-black text-slate-800 leading-none mb-1">{user.name}</p>
                 <div className="flex items-center justify-end gap-1">
                   <ShieldCheck size={10} className="text-blue-500" />
-                  <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">{user.role}</p>
+                  <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">{user.role_name || "User"}</p>
                 </div>
               </div>
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center text-white font-black text-xl border-2 border-white ring-1 ring-slate-100">
+              
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="w-12 h-12 bg-blue-600 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center text-white font-black text-xl border-2 border-white ring-1 ring-slate-100 hover:scale-105 transition-transform"
+              >
                 {user.name.charAt(0)}
-              </div>
+              </button>
+
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 top-16 w-56 bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-2 z-[60]"
+                  >
+                    <div className="p-4 border-b border-slate-50 mb-2">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signed in as</p>
+                      <p className="text-xs font-black text-slate-800 truncate">{user.email}</p>
+                    </div>
+                    <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-2xl transition-all text-sm font-bold group">
+                      <UserIcon size={18} className="group-hover:text-blue-600" /> Profil Saya
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-sm font-bold group"
+                    >
+                      <LogOut size={18} className="group-hover:translate-x-1 transition-transform" /> Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
@@ -129,7 +186,6 @@ export default function RiwayatPage() {
         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
           <div className="max-w-5xl mx-auto space-y-8">
             
-            {/* Top Toolbar */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
               <div className="relative w-full md:w-96">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
@@ -144,7 +200,6 @@ export default function RiwayatPage() {
               </button>
             </div>
 
-            {/* List Activity (Staggered Animation) */}
             <div className="space-y-4">
               {data.map((item, i) => (
                 <motion.div
@@ -156,7 +211,6 @@ export default function RiwayatPage() {
                   className="bg-white p-6 rounded-[32px] border border-slate-50 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 group hover:shadow-xl hover:shadow-blue-900/5 transition-all"
                 >
                   <div className="flex items-center gap-6 w-full">
-                    {/* Icon Status */}
                     <div className={`w-16 h-16 rounded-[22px] flex items-center justify-center shrink-0 shadow-inner group-hover:rotate-6 transition-transform
                       ${item.status === 'disetujui' ? 'bg-green-50 text-green-500' : 
                         item.status === 'menunggu' ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500'}`}
@@ -173,21 +227,24 @@ export default function RiwayatPage() {
                       <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-300">
                         <span className="flex items-center gap-1"><Clock size={12} /> {item.time}</span>
                         <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                        <span>ID: SAS-00{i+1}</span>
+                        <span>ID: {item.id}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-3 w-full md:w-auto">
-                    <button className="flex-1 md:flex-none px-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2 group-hover:bg-blue-600 group-hover:text-white">
-                      Detail <ArrowUpRight size={14} />
+                    {/* AKSI CLICK DETAILS */}
+                    <button 
+                      onClick={() => setSelectedItem(item)}
+                      className="flex-1 md:flex-none px-6 py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
+                    >
+                      Detail <ArrowUpRight size={14} className="group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
                     </button>
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            {/* Pagination / Load More */}
             <div className="flex justify-center pt-8">
               <button className="px-10 py-4 border-2 border-dashed border-slate-200 rounded-[24px] text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:border-blue-300 hover:text-blue-500 transition-all">
                 Muat Lebih Banyak
@@ -201,6 +258,93 @@ export default function RiwayatPage() {
         </div>
       </main>
 
+      {/* --- MODAL DETAIL COMPONENT --- */}
+      <AnimatePresence>
+        {selectedItem && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedItem(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            
+            {/* Modal Card */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="p-8 pb-4 flex justify-between items-start">
+                <div className={`p-4 rounded-2xl ${
+                  selectedItem.status === 'disetujui' ? 'bg-green-50' : 
+                  selectedItem.status === 'menunggu' ? 'bg-orange-50' : 'bg-red-50'
+                }`}>
+                  {selectedItem.icon}
+                </div>
+                <button 
+                  onClick={() => setSelectedItem(null)}
+                  className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-8 pb-10 space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <StatusBadge status={selectedItem.status} />
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{selectedItem.id}</span>
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">{selectedItem.title}</h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <Calendar size={12} className="text-blue-500" /> Tanggal Input
+                    </p>
+                    <p className="text-sm font-black text-slate-700">{selectedItem.date}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <Clock size={12} className="text-blue-500" /> Terakhir Update
+                    </p>
+                    <p className="text-sm font-black text-slate-700">{selectedItem.time}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <FileText size={12} className="text-blue-500" /> Deskripsi Pengajuan
+                  </p>
+                  <p className="text-sm text-slate-600 font-medium leading-relaxed bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    {selectedItem.fullDesc}
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <button 
+                    onClick={() => setSelectedItem(null)}
+                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-blue-600 transition-all active:scale-95"
+                  >
+                    Tutup Detail
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Decor */}
+              <div className="h-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -211,7 +355,7 @@ export default function RiwayatPage() {
   );
 }
 
-// Komponen NavItem (Konsisten dengan Dashboard & Ajukan)
+// Komponen NavItem
 const NavItem = ({ icon, label, active = false, isOpen }: any) => (
   <div className={`
     flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all duration-300 relative group
@@ -222,18 +366,16 @@ const NavItem = ({ icon, label, active = false, isOpen }: any) => (
   </div>
 );
 
-// Komponen StatusBadge Mewah
+// Komponen StatusBadge
 function StatusBadge({ status }: { status: string }) {
   const config: any = {
     disetujui: { bg: "bg-green-500 text-white", label: "Approved" },
     menunggu: { bg: "bg-orange-500 text-white", label: "Pending" },
     ditolak: { bg: "bg-red-500 text-white", label: "Rejected" },
   };
-
   const style = config[status.toLowerCase()] || config.menunggu;
-
   return (
-    <div className={`px-2.5 py-0.5 rounded-lg font-black text-[8px] uppercase tracking-tighter ${style.bg} shadow-sm`}>
+    <div className={`px-2.5 py-0.5 rounded-lg font-black text-[8px] uppercase tracking-tighter ${style.bg} shadow-sm inline-block`}>
       {style.label}
     </div>
   );

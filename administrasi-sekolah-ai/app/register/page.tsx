@@ -47,10 +47,10 @@ export default function RegisterPage() {
               <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
                 <Cpu className="text-white w-6 h-6" />
               </div>
-              <span className="font-bold text-xl tracking-tight text-white">EduAdminAI</span>
+              <span className="font-bold text-xl tracking-tight text-white">ASAI</span>
             </div>
             <h2 className="text-4xl font-bold leading-tight mb-4">
-              Bergabunglah dengan <br /> Ekosistem Digital.
+              Bergabunglah dengan <br /> Adminitrasi sekolah ai.
             </h2>
             <p className="text-blue-100 leading-relaxed">
               Kelola persuratan dan administrasi sekolah jadi lebih praktis, otomatis, dan cerdas dengan asisten AI.

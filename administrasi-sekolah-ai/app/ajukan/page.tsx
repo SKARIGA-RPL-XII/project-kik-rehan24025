@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,16 +18,21 @@ import {
   ShieldCheck,
   Info,
   ArrowLeft,
-  PenLine
+  PenLine,
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 export default function AjukanSuratPage() {
   const router = useRouter();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Mock data User
-  const user = { name: "Budi Santoso", role: "Guru Pengajar" };
+  // State untuk Data User
+  const [user, setUser] = useState({ name: "Loading...", role_name: "User", email: "" });
 
   // State untuk Form
   const [form, setForm] = useState({
@@ -37,13 +42,46 @@ export default function AjukanSuratPage() {
     isi: "",
   });
 
+  // Ambil data user
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.name) setUser(data);
+      })
+      .catch(() => router.push("/login"));
+  }, [router]);
+
+  // Handle Klik di luar Dropdown Profile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Simulasi Fitur AI (Hanya UI)
+  const handleLogout = () => {
+    router.push("/login");
+  };
+
+  // Fitur AI Writing
   const handleAiWrite = () => {
-    if (!form.jenis || !form.judul) return alert("Pilih jenis dan judul surat terlebih dahulu agar AI bisa bekerja.");
+    if (!form.jenis || !form.judul) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Data Kurang Lengkap',
+        text: 'Pilih jenis dan judul surat terlebih dahulu agar AI bisa bekerja.',
+        confirmButtonColor: '#2563eb'
+      });
+      return;
+    }
     setIsAiLoading(true);
     setTimeout(() => {
       setForm({
@@ -54,27 +92,51 @@ export default function AjukanSuratPage() {
     }, 1500);
   };
 
+  // Fungsi Kirim ke Database - DIPERBARUI AGAR SINKRON DENGAN API
   const submit = async () => {
-    if (!form.judul || !form.jenis) return alert("Mohon isi semua field");
+    // Validasi field wajib
+    if (!form.judul || !form.jenis || !form.isi) {
+      Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Mohon isi semua field wajib!' });
+      return;
+    }
 
-    const res = await fetch("/api/surat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/surat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Mengirim seluruh object form (termasuk penerima)
+        body: JSON.stringify({
+          judul: form.judul,
+          jenis: form.jenis,
+          isi: form.isi,
+          penerima: form.penerima // Memastikan data penerima ikut terkirim
+        }),
+      });
 
-    if (res.ok) {
-      alert("Surat berhasil dikirim");
-      router.push("/dashboard");
-    } else {
-      alert("Gagal mengirim surat");
+      const result = await res.json();
+
+      if (res.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil Terkirim',
+          text: result.message,
+          showConfirmButton: false,
+          timer: 1500
+        });
+        setTimeout(() => router.push("/dashboard"), 1600);
+      } else {
+        // Jika error 400 dari API (Kategori tidak ditemukan), pesan ini akan muncul
+        Swal.fire({ icon: 'error', title: 'Gagal', text: result.message });
+      }
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan koneksi.' });
     }
   };
 
   return (
     <div className="flex min-h-screen bg-[#F4F7FE] text-slate-800 font-sans overflow-hidden">
       
-      {/* SIDEBAR (Konsisten dengan Dashboard) */}
+      {/* SIDEBAR */}
       <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} transition-all duration-500 bg-white border-r border-slate-100 flex flex-col z-50`}>
         <div className="p-8 flex items-center gap-4 overflow-hidden whitespace-nowrap">
           <div className="bg-blue-600 w-10 h-10 min-w-[40px] rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
@@ -114,7 +176,7 @@ export default function AjukanSuratPage() {
         {/* HEADER */}
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-10 flex justify-between items-center z-40">
           <div className="flex items-center gap-6">
-            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 transition-all border border-transparent hover:border-slate-100">
+            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 transition-all">
               <Menu size={20} />
             </button>
             <div className="hidden lg:block">
@@ -126,17 +188,46 @@ export default function AjukanSuratPage() {
           </div>
 
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-4 pl-8 border-l border-slate-100">
+            <div className="flex items-center gap-4 pl-8 border-l border-slate-100 relative" ref={dropdownRef}>
               <div className="text-right hidden md:block">
                 <p className="text-sm font-black text-slate-800 leading-none mb-1">{user.name}</p>
                 <div className="flex items-center justify-end gap-1">
                   <ShieldCheck size={10} className="text-blue-500" />
-                  <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">{user.role}</p>
+                  <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">{user.role_name}</p>
                 </div>
               </div>
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center text-white font-black text-xl border-2 border-white ring-1 ring-slate-100">
+              
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="w-12 h-12 bg-blue-600 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center text-white font-black text-xl border-2 border-white ring-1 ring-slate-100 hover:scale-105 transition-all"
+              >
                 {user.name.charAt(0)}
-              </div>
+              </button>
+
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 top-16 w-56 bg-white rounded-3xl shadow-2xl shadow-blue-900/10 border border-slate-100 p-2 z-[60]"
+                  >
+                    <div className="p-4 border-b border-slate-50 mb-2">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signed in as</p>
+                      <p className="text-xs font-black text-slate-800 truncate">{user.email || "user@example.com"}</p>
+                    </div>
+                    <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-2xl transition-all text-sm font-bold group text-left">
+                      <UserIcon size={18} className="group-hover:text-blue-600" /> Profil Saya
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-sm font-bold group text-left"
+                    >
+                      <LogOut size={18} className="group-hover:translate-x-1 transition-transform" /> Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
@@ -155,25 +246,25 @@ export default function AjukanSuratPage() {
               className="bg-white rounded-[40px] shadow-sm border border-slate-50 overflow-hidden"
             >
               <div className="grid md:grid-cols-3">
-                {/* Information Side (Left) */}
+                {/* Information Side */}
                 <div className="bg-slate-900 p-10 text-white">
                   <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-500/20">
                     <Info size={24} />
                   </div>
                   <h3 className="text-2xl font-black mb-4 leading-tight">Panduan Pengajuan</h3>
                   <ul className="space-y-4 text-slate-400 text-sm font-medium">
-                    <li className="flex gap-3"><span className="text-blue-500 font-black">01</span> Pastikan jenis surat sesuai dengan kebutuhan Anda.</li>
-                    <li className="flex gap-3"><span className="text-blue-500 font-black">02</span> Gunakan bahasa formal dan sopan dalam isi surat.</li>
-                    <li className="flex gap-3"><span className="text-blue-500 font-black">03</span> Persetujuan akan dilakukan oleh Admin dalam 1x24 jam.</li>
+                    <li className="flex gap-3"><span className="text-blue-500 font-black">01</span> Pilih kategori surat yang sesuai dengan database.</li>
+                    <li className="flex gap-3"><span className="text-blue-500 font-black">02</span> Gunakan fitur AI untuk mempercepat penulisan draf.</li>
+                    <li className="flex gap-3"><span className="text-blue-500 font-black">03</span> Status 'menunggu' berarti surat sedang diverifikasi Admin.</li>
                   </ul>
 
                   <div className="mt-12 p-6 bg-white/5 rounded-3xl border border-white/10">
                     <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Butuh Bantuan?</p>
-                    <p className="text-xs text-slate-400">Hubungi tim IT SAS Digital jika mengalami kendala teknis.</p>
+                    <p className="text-xs text-slate-400">Hubungi tim IT jika kategori surat yang Anda cari tidak tersedia.</p>
                   </div>
                 </div>
 
-                {/* Form Side (Right) */}
+                {/* Form Side */}
                 <div className="md:col-span-2 p-10">
                   <div className="space-y-6">
                     <div className="grid sm:grid-cols-2 gap-6">
@@ -195,7 +286,7 @@ export default function AjukanSuratPage() {
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul / Perihal</label>
                         <input
                           name="judul"
-                          placeholder="Contoh: Izin Sakit"
+                          placeholder="Contoh: Permohonan Izin Sakit"
                           onChange={handleChange}
                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                         />
@@ -206,7 +297,7 @@ export default function AjukanSuratPage() {
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Penerima (Yth.)</label>
                       <input
                         name="penerima"
-                        placeholder="Nama Kepala Sekolah atau Jabatan Terkait"
+                        placeholder="Nama Kepala Sekolah atau Jabatan"
                         onChange={handleChange}
                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                       />
@@ -216,6 +307,7 @@ export default function AjukanSuratPage() {
                       <div className="flex justify-between items-center mb-1">
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Isi Surat Lengkap</label>
                         <button 
+                          type="button"
                           onClick={handleAiWrite}
                           disabled={isAiLoading}
                           className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-tighter text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition-all"
@@ -227,7 +319,7 @@ export default function AjukanSuratPage() {
                         name="isi"
                         value={form.isi}
                         onChange={handleChange}
-                        placeholder="Tuliskan isi surat secara mendetail di sini..."
+                        placeholder="Tuliskan isi surat secara mendetail..."
                         className="w-full bg-slate-50 border border-slate-100 rounded-[24px] p-6 text-sm font-medium focus:ring-2 focus:ring-blue-100 outline-none transition-all h-56 resize-none leading-relaxed"
                       />
                     </div>
@@ -260,7 +352,7 @@ export default function AjukanSuratPage() {
   );
 }
 
-// NavItem Component (Konsisten dengan Dashboard)
+// NavItem Component
 const NavItem = ({ icon, label, active = false, isOpen }: any) => (
   <div className={`
     flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all duration-300 relative group

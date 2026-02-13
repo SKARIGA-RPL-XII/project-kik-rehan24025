@@ -1,26 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bell, MessageSquare, FileText, Clock, CheckCircle, XCircle, 
   Search, Filter, Download, LayoutDashboard, Send, History, 
   GraduationCap, X, Menu, Sparkles, ChevronRight, Zap, ShieldCheck,
-  User, LogOut, ChevronDown
+  User, LogOut, ChevronDown, FileQuestion
 } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardSuratPage() {
   const [user, setUser] = useState<any>(null);
   const [surat, setSurat] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [showPromo, setShowPromo] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // State untuk dropdown profile
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
-    // Mengambil data user yang sudah include role_name dari backend
+    // Mengambil data user
     fetch("/api/me").then((res) => res.json()).then(setUser);
-    fetch("/api/surat").then((res) => res.json()).then(setSurat);
+    // Mengambil data surat
+    fetch("/api/surat").then((res) => res.json()).then((data) => {
+      setSurat(Array.isArray(data) ? data : []);
+    });
 
     const hasSeenPromo = sessionStorage.getItem("seen-promo");
     if (!hasSeenPromo) {
@@ -28,13 +32,26 @@ export default function DashboardSuratPage() {
     }
   }, []);
 
+  // --- LOGIKA FILTER SEARCH ---
+  const filteredSurat = useMemo(() => {
+    return surat.filter((s) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        s.judul?.toLowerCase().includes(searchLower) ||
+        s.jenis?.toLowerCase().includes(searchLower) ||
+        s.status?.toLowerCase().includes(searchLower) ||
+        String(s.id).toLowerCase().includes(searchLower) ||
+        s.penerima?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [searchQuery, surat]);
+
   const closePromo = () => {
     setShowPromo(false);
     sessionStorage.setItem("seen-promo", "true");
   };
 
   const handleLogout = async () => {
-    // Tambahkan logika penghapusan cookie/session di sini jika diperlukan
     window.location.href = "/login";
   };
 
@@ -116,7 +133,7 @@ export default function DashboardSuratPage() {
             <GraduationCap className="text-white w-6 h-6" />
           </div>
           <div className={`transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-            <h1 className="font-black text-xl tracking-tight text-slate-800">SAS<span className="text-blue-600">PRO</span></h1>
+            <h1 className="font-black text-xl tracking-tight text-slate-800">Administrasi<span className="text-blue-600">AI</span></h1>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">User Portal</p>
           </div>
         </div>
@@ -152,9 +169,18 @@ export default function DashboardSuratPage() {
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 border border-transparent hover:border-slate-100 transition-all">
               <Menu size={20} />
             </button>
-            <div className="hidden lg:flex items-center gap-3 bg-slate-50 px-5 py-2.5 rounded-full w-80 border border-slate-100 focus-within:border-blue-300 transition-all">
-              <Search size={18} className="text-slate-300" />
-              <input type="text" placeholder="Cari data surat..." className="bg-transparent border-none outline-none text-sm w-full font-medium" />
+            <div className="hidden lg:flex items-center gap-3 bg-slate-50 px-5 py-2.5 rounded-full w-80 border border-slate-100 focus-within:border-blue-300 focus-within:bg-white transition-all">
+              <Search size={18} className={`${searchQuery ? 'text-blue-500' : 'text-slate-300'}`} />
+              <input 
+                type="text" 
+                placeholder="Cari Judul, Kategori, atau ID..." 
+                className="bg-transparent border-none outline-none text-sm w-full font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <X size={14} className="text-slate-400 cursor-pointer hover:text-red-500" onClick={() => setSearchQuery("")} />
+              )}
             </div>
           </div>
 
@@ -181,7 +207,7 @@ export default function DashboardSuratPage() {
                   <div className="flex items-center justify-end gap-1">
                     <ShieldCheck size={10} className="text-blue-500" />
                     <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">
-                      {user.role_name || "User"} {/* Role dinamis dari DB */}
+                      {user.role_name || "User"}
                     </p>
                   </div>
                 </div>
@@ -226,7 +252,7 @@ export default function DashboardSuratPage() {
         </header>
 
         {/* SCROLLABLE AREA */}
-        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-[#F4F7FE]">
           <div className="max-w-7xl mx-auto space-y-10">
             
             {/* WELCOME SECTION */}
@@ -252,7 +278,7 @@ export default function DashboardSuratPage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">{item.title}</p>
-                    <p className="text-4xl font-black text-slate-800 leading-none">{item.value}</p>
+                    <p className="text-4xl font-black text-slate-800 leading-none tracking-tight">{item.value}</p>
                   </div>
                 </motion.div>
               ))}
@@ -262,13 +288,15 @@ export default function DashboardSuratPage() {
             <motion.section 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-[40px] shadow-sm border border-slate-50 overflow-hidden"
+              className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-10"
             >
               <div className="p-10">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10">
                   <div>
                     <h2 className="text-2xl font-black text-slate-800">Riwayat Pengajuan Surat</h2>
-                    <p className="text-sm text-slate-400 mt-1 font-medium">Daftar surat yang baru-baru ini Anda ajukan ke sistem.</p>
+                    <p className="text-sm text-slate-400 mt-1 font-medium">
+                      {searchQuery ? `Hasil pencarian untuk "${searchQuery}"` : "Daftar surat yang baru-baru ini Anda ajukan ke sistem."}
+                    </p>
                   </div>
                   <div className="flex gap-4">
                      <button className="flex items-center gap-2 px-5 py-3 border border-slate-100 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">
@@ -289,48 +317,76 @@ export default function DashboardSuratPage() {
                         <th className="pb-6 px-4">Tracking ID</th>
                         <th className="pb-6 px-4">Detail Surat</th>
                         <th className="pb-6 px-4">Kategori</th>
-                        <th className="pb-6 px-4 text-center">Tanggal</th>
                         <th className="pb-6 px-4 text-center">Status</th>
-                        <th className="pb-6 px-4 text-right">Download</th>
+                        <th className="pb-6 px-4 text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {surat.map((s, idx) => (
-                        <motion.tr 
-                          key={s.id || idx}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: idx * 0.05 }}
-                          className="group hover:bg-slate-50/50 transition-colors"
-                        >
-                          <td className="py-7 px-4">
-                            <span className="bg-slate-100 text-slate-500 py-1.5 px-3 rounded-lg text-xs font-black">#{s.id || `SAS-${idx + 101}`}</span>
-                          </td>
-                          <td className="py-7 px-4">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-bold text-slate-800 mb-0.5">{s.judul}</span>
-                              <span className="text-[11px] text-slate-400 font-medium">Penerima: {s.penerima || "Kepala Sekolah"}</span>
-                            </div>
-                          </td>
-                          <td className="py-7 px-4">
-                            <span className="text-xs font-bold text-slate-600 bg-slate-50 py-1.5 px-4 rounded-full border border-slate-100">{s.jenis || "Administrasi"}</span>
-                          </td>
-                          <td className="py-7 px-4 text-sm text-slate-500 text-center font-medium">{s.created_at || "08 Feb 2026"}</td>
-                          <td className="py-7 px-4 text-center">
-                            <StatusBadge status={s.status} />
-                          </td>
-                          <td className="py-7 px-4 text-right">
-                            <button className="w-10 h-10 inline-flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100">
-                              <Download size={20} />
-                            </button>
-                          </td>
-                        </motion.tr>
-                      ))}
-                      {surat.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="py-20 text-center text-slate-400 font-medium italic">Belum ada pengajuan surat baru.</td>
-                        </tr>
-                      )}
+                      <AnimatePresence mode="popLayout">
+                        {filteredSurat.length > 0 ? (
+                          filteredSurat.map((s, idx) => (
+                            <motion.tr 
+                              key={s.id || idx}
+                              layout
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="group hover:bg-blue-50/40 transition-colors"
+                            >
+                              <td className="py-7 px-4">
+                                <span className="bg-slate-100 text-slate-500 py-1.5 px-3 rounded-lg text-xs font-black">#{s.id || `SAS-${idx + 101}`}</span>
+                              </td>
+                              <td className="py-7 px-4">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-slate-800 mb-0.5 group-hover:text-blue-600 transition-colors">{s.judul}</span>
+                                  <span className="text-[11px] text-slate-400 font-medium italic">Penerima: {s.penerima || "Sistem Administrasi"}</span>
+                                </div>
+                              </td>
+                              <td className="py-7 px-4">
+                                <span className="text-xs font-bold text-slate-600 bg-slate-50 py-1.5 px-4 rounded-full border border-slate-100">{s.jenis || "Administrasi"}</span>
+                              </td>
+                              <td className="py-7 px-4 text-center">
+                                <StatusBadge status={s.status} />
+                              </td>
+                              <td className="py-7 px-4 text-right">
+                                <button className="w-10 h-10 inline-flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100">
+                                  <Download size={20} />
+                                </button>
+                              </td>
+                            </motion.tr>
+                          ))
+                        ) : (
+                          /* EMPTY STATE - ANIMASI JIKA TIDAK KETEMU */
+                          <motion.tr 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                          >
+                            <td colSpan={5} className="py-24">
+                              <div className="flex flex-col items-center justify-center text-center">
+                                <motion.div 
+                                  initial={{ scale: 0 }} 
+                                  animate={{ scale: 1 }} 
+                                  transition={{ type: "spring", bounce: 0.5 }}
+                                  className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100"
+                                >
+                                  <FileQuestion size={40} className="text-slate-300" />
+                                </motion.div>
+                                <h3 className="text-lg font-black text-slate-800 mb-1">Surat Tidak Ditemukan</h3>
+                                <p className="text-sm text-slate-400 max-w-xs mx-auto">
+                                  Kami tidak menemukan data untuk kata kunci <span className="text-blue-600 font-bold">"{searchQuery}"</span>.
+                                </p>
+                                <button 
+                                  onClick={() => setSearchQuery("")}
+                                  className="mt-6 text-xs font-black uppercase text-blue-600 tracking-widest hover:underline"
+                                >
+                                  Tampilkan Semua Surat
+                                </button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        )}
+                      </AnimatePresence>
                     </tbody>
                   </table>
                 </div>

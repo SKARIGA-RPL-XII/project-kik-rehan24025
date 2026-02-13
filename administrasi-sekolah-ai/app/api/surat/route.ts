@@ -3,79 +3,148 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 
 /*
-=====================
-GET SURAT USER
-=====================
+===========================================================
+GET SURAT
+===========================================================
 */
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("user_id")?.value;
+    const cookieStore = await cookies(); // WAJIB await di Next 16
+    const userIdCookie = cookieStore.get("user_id")?.value;
+    const roleId = cookieStore.get("role_id")?.value;
 
-    if (!userId) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    if (!userIdCookie) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const [rows]: any = await db.query(
-      "SELECT * FROM surat WHERE user_id = ? ORDER BY created_at DESC",
-      [userId]
-    );
+    const userId = Number(userIdCookie);
 
-    return NextResponse.json(rows);
+    let query = "";
+    let params: any[] = [];
 
-  } catch (error) {
-    console.error("SURAT GET ERROR:", error);
-    return NextResponse.json(
-      { message: "Server error" },
-      { status: 500 }
-    );
+    if (roleId === "1") {
+      // ADMIN → ambil semua surat
+      query = `
+        SELECT s.*, js.nama_surat, u.name AS nama_pengaju
+        FROM surat s
+        JOIN jenis_surat js ON s.jenis_surat_id = js.id
+        JOIN users u ON s.user_id = u.id
+        ORDER BY s.created_at DESC
+      `;
+    } else {
+      // USER → hanya surat miliknya
+      query = `
+        SELECT s.*, js.nama_surat
+        FROM surat s
+        JOIN jenis_surat js ON s.jenis_surat_id = js.id
+        WHERE s.user_id = ?
+        ORDER BY s.created_at DESC
+      `;
+      params = [userId];
+    }
+
+    const [rows]: any = await db.query(query, params);
+
+    return NextResponse.json(Array.isArray(rows) ? rows : []);
+  } catch (error: any) {
+    console.error("SURAT GET ERROR:", error.message);
+    return NextResponse.json({ message: "Server Error" }, { status: 500 });
   }
 }
 
 /*
-=====================
+===========================================================
 POST AJUKAN SURAT
-=====================
+===========================================================
 */
 export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("user_id")?.value;
+    const userIdCookie = cookieStore.get("user_id")?.value;
 
-    if (!userId) {
+    if (!userIdCookie) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = Number(userIdCookie);
+    const { judul, jenis, isi } = await req.json();
+
+    if (!judul || !jenis || !isi) {
+      return NextResponse.json({ message: "Data belum lengkap" }, { status: 400 });
+    }
+
+    const [jenisRow]: any = await db.query(
+      "SELECT id FROM jenis_surat WHERE nama_surat = ?",
+      [jenis]
+    );
+
+    if (!jenisRow.length) {
       return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
+        { message: "Kategori surat tidak ditemukan" },
+        { status: 400 }
       );
     }
 
-    const { judul, jenis, penerima, isi } = await req.json();
+    const jenisSuratId = jenisRow[0].id;
 
-    if (!judul || !jenis || !penerima || !isi) {
+    await db.query(
+      `INSERT INTO surat (user_id, jenis_surat_id, judul, isi_surat, status, created_at)
+       VALUES (?, ?, ?, ?, 'menunggu', NOW())`,
+      [userId, jenisSuratId, judul, isi]
+    );
+
+    await db.query(
+      "INSERT INTO logs (user_id, aktivitas, created_at) VALUES (?, ?, NOW())",
+      [userId, `Mengajukan surat baru: ${judul}`]
+    );
+
+    return NextResponse.json({ message: "Surat berhasil diajukan" });
+  } catch (error: any) {
+    console.error("SURAT POST ERROR:", error.message);
+    return NextResponse.json({ message: "Server Error" }, { status: 500 });
+  }
+}
+
+/*
+===========================================================
+PATCH UPDATE STATUS (ADMIN ONLY)
+===========================================================
+*/
+export async function PATCH(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const roleId = cookieStore.get("role_id")?.value;
+
+    if (roleId !== "1") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const { id, status } = await req.json();
+
+    if (!id || !status) {
       return NextResponse.json(
-        { message: "Data belum lengkap" },
+        { message: "ID atau status tidak valid" },
         { status: 400 }
       );
     }
 
     await db.query(
-      `INSERT INTO surat 
-       (judul, jenis, penerima, isi, status, user_id) 
-       VALUES (?, ?, ?, ?, 'menunggu', ?)`,
-      [judul, jenis, penerima, isi, userId]
+      "UPDATE surat SET status = ? WHERE id = ?",
+      [status, id]
+    );
+
+    await db.query(
+      "INSERT INTO logs (user_id, aktivitas, created_at) VALUES (1, ?, NOW())",
+      [`Admin mengubah status surat #${id} menjadi ${status}`]
     );
 
     return NextResponse.json({
-      message: "Surat berhasil diajukan",
+      message: `Surat berhasil di-${status}`,
     });
-
-  } catch (error) {
-    console.error("SURAT POST ERROR:", error);
+  } catch (error: any) {
+    console.error("SURAT PATCH ERROR:", error.message);
     return NextResponse.json(
-      { message: "Server error" },
+      { message: "Gagal memproses surat" },
       { status: 500 }
     );
   }
